@@ -11,6 +11,7 @@
                  [compojure "1.6.0"]
                  [conman "0.7.6"]
                  [cprop "0.1.11"]
+                 [clj-http "3.9.0"]
                  [funcool/struct "1.2.0"]
                  [luminus-aleph "0.1.5"]
                  [luminus-migrations "0.5.0"]
@@ -38,7 +39,7 @@
                  [selmer "1.11.7"]]
 
   :min-lein-version "2.0.0"
-  
+
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj"]
   :resource-paths ["resources" "target/cljsbuild"]
@@ -56,7 +57,7 @@
    :css-dirs ["resources/public/css"]
    :nrepl-middleware
    [cemerick.piggieback/wrap-cljs-repl cider.nrepl/cider-middleware]}
-  
+
 
   :profiles
   {:uberjar {:omit-source true
@@ -74,8 +75,8 @@
                  :closure-warnings
                  {:externs-validation :off :non-standard-jsdoc :off}
                  :externs ["react/externs/react.js"]}}}}
-             
-             
+
+
              :aot :all
              :uberjar-name "whatishacktivism.jar"
              :source-paths ["env/prod/clj"]
@@ -113,9 +114,9 @@
                       :pretty-print true
                       :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}
                       :preloads [day8.re-frame-10x.preload]}}}}
-                  
-                  
-                  
+
+
+
                   :doo {:build "test"}
                   :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
@@ -133,7 +134,7 @@
                       :main "whatishacktivism.doo-runner"
                       :optimizations :whitespace
                       :pretty-print true}}}}
-                  
+
                   }
    :profiles/dev {}
    :profiles/test {}})
