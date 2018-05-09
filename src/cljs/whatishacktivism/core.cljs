@@ -10,6 +10,8 @@
             [whatishacktivism.events])
   (:import goog.History))
 
+;; TODO: Allow user to sort HN item sources based on political leanings; store and learn to predict?
+
 (defn nav-link [uri title page]
   [:a.link.dim.f6.f5-ns.dib.mr3
    {:class (if (= page @(rf/subscribe [:page])) "near-black b" "gray")
@@ -39,13 +41,18 @@
 (defn home-page []
   [card "Hacktivism is..." "Lorem ipsum dolor sit amet, consetetur sadipscing eliter, sed diam nonumy eirmod..."])
 
+(defn landing-page []
+  [:article.vh-100.dt.w-100
+   [:div.dtc.v-mid.tc.orange.ph3.ph4-l
+    [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]]])
 
 (def pages
-  {:home #'home-page
-   :about #'about-page})
+  {:about #'about-page
+   :home #'landing-page
+   :landing #'landing-page})
 
 (defn page []
-  [:div.athelas.near-black.pa3.pa4-ns
+  [:div.avenir-next.near-black.pa3.pa4-ns
    [navbar]
    [(pages @(rf/subscribe [:page]))]])
 
