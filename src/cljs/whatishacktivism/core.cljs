@@ -44,7 +44,8 @@
 (defn landing-page []
   [:article.vh-100.dt.w-100
    [:div.dtc.v-mid.tc.orange.ph3.ph4-l
-    [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]]])
+    [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]
+    [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange {:href "#0"} "Do I have a choice?"]]])
 
 (def pages
   {:about #'about-page
@@ -52,8 +53,7 @@
    :landing #'landing-page})
 
 (defn page []
-  [:div.avenir-next.near-black.pa3.pa4-ns
-   [navbar]
+  [:main.avenir-next.near-black
    [(pages @(rf/subscribe [:page]))]])
 
 ;; -------------------------

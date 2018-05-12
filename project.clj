@@ -12,6 +12,7 @@
                  [conman "0.7.6"]
                  [cprop "0.1.11"]
                  [clj-http "3.9.0"]
+                 [day8.re-frame/http-fx "0.1.6"]
                  [funcool/struct "1.2.0"]
                  [luminus-aleph "0.1.5"]
                  [luminus-migrations "0.5.0"]
