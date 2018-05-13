@@ -1,8 +1,8 @@
 (ns whatishacktivism.events
   (:require [whatishacktivism.db :as db]
-            [ajax.core :refer [GET]]
+            [ajax.core :as ajax]
             [day8.re-frame.http-fx]
-            [re-frame.core :refer [dispatch reg-event-db reg-sub]]))
+            [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub]]))
 
 ;;dispatchers
 
@@ -16,13 +16,29 @@
   (fn [db [_ page]]
     (assoc db :page page)))
 
+(reg-event-db
+ :set-hn-story-ids
+ (fn [db [_ ids]]
+   (assoc db :hn-story-ids ids)))
+
 (reg-event-fx
- :request-hn-story
+ :request-hn-story-ids
  (fn [{:keys [db]} _]
    {:http-xhrio {:method :get
-                 :uri (str "/stories/top?limit=1&latest=" (get-in db [:active-hn-story :id] "0"))
+                 :uri (str "/stories/top")
                  :format (ajax/json-request-format)
-                 :response-formate (ajax/json-response-format {:keywords? true})
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success [:process-response]
+                 :on-failure [:process-error]}
+    :db (assoc db :loading? true)}))
+
+(reg-event-fx
+ :request-hn-story
+ (fn [{:keys [db]} [id]]
+   {:http-xhrio {:method :get
+                 :uri (str "/stories/top/" id)
+                 :format (ajax/json-request-format)
+                 :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:process-response]
                  :on-failure [:process-error]}
     :db (assoc db :loading? true)}))
@@ -35,6 +51,13 @@
        (assoc db-key (js->clj data)))))
 
 (reg-event-db
+ :process-error
+ (fn [db [_ error]]
+   (-> db
+       (assoc :loading? false)
+       (assoc :error (js->clj error)))))
+
+(reg-event-db
   :set-docs
   (fn [db [_ docs]]
     (assoc db :docs docs)))
@@ -45,6 +68,11 @@
  :loading?
  (fn [db _]
    (:loading? db)))
+
+(reg-sub
+ :hn-story-ids
+ (fn [db _]
+   (:hn-story-ids db)))
 
 (reg-sub
   :page

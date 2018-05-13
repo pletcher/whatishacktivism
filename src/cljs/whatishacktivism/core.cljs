@@ -38,19 +38,19 @@
                   "What is Digital Humanities?"]
                  ", an app that presents random quotes about digital humanities based on a curated list."]))
 
-(defn home-page []
-  [card "Hacktivism is..." "Lorem ipsum dolor sit amet, consetetur sadipscing eliter, sed diam nonumy eirmod..."])
+(defn start-button []
+  [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange
+   {:href "#" :onClick #(rf/dispatch [:request-hn-story-ids])} "Do I have a choice?"])
 
-(defn landing-page []
+(defn home-page []
   [:article.vh-100.dt.w-100
    [:div.dtc.v-mid.tc.orange.ph3.ph4-l
     [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]
-    [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange {:href "#0"} "Do I have a choice?"]]])
+    (start-button)]])
 
 (def pages
   {:about #'about-page
-   :home #'landing-page
-   :landing #'landing-page})
+   :home #'home-page})
 
 (defn page []
   [:main.avenir-next.near-black

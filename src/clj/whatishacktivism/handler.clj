@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [whatishacktivism.layout :refer [error-page]]
             [whatishacktivism.routes.home :refer [home-routes]]
+            [whatishacktivism.routes.hackernews :refer [hackernews-routes]]
             [compojure.route :as route]
             [whatishacktivism.env :refer [defaults]]
             [mount.core :as mount]
@@ -14,11 +15,13 @@
 (mount/defstate app
   :start
   (middleware/wrap-base
-    (routes
-      (-> #'home-routes
-          (wrap-routes middleware/wrap-csrf)
-          (wrap-routes middleware/wrap-formats))
-      (route/not-found
-        (:body
-          (error-page {:status 404
-                       :title "page not found"}))))))
+   (routes
+    (-> #'home-routes
+        (wrap-routes middleware/wrap-csrf)
+        (wrap-routes middleware/wrap-formats))
+    (-> #'hackernews-routes
+        (wrap-routes middleware/wrap-csrf)
+        (wrap-routes middleware/wrap-formats))
+    (route/not-found
+     (:body {:status 404
+             :title "route not found"})))))

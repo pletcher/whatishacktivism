@@ -8,7 +8,7 @@
 (def opts {:as :json})
 
 (defn req [endpoint]
-  (client/get (str base-url "/" endpoint ".json") opts))
+  (-> (client/get (str base-url "/" endpoint ".json") opts) :body))
 
 (defn best-stories [] (req "beststories"))
 
