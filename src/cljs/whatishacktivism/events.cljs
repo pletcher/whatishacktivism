@@ -2,7 +2,7 @@
   (:require [whatishacktivism.db :as db]
             [ajax.core :as ajax]
             [day8.re-frame.http-fx]
-            [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub]]))
+            [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub subscribe]]))
 
 ;;dispatchers
 
@@ -16,39 +16,47 @@
   (fn [db [_ page]]
     (assoc db :page page)))
 
-(reg-event-db
- :set-hn-story-ids
- (fn [db [_ ids]]
-   (assoc db :hn-story-ids ids)))
+(reg-event-fx
+ :show-stories
+ (fn [{:keys [db]} [_ story-idx]]
+   {:dispatch-n (list [:set-active-page :story]
+                      [:set-active-story-idx (int story-idx)]
+                      [:request-story-ids])}))
 
 (reg-event-fx
- :request-hn-story-ids
+ :request-story-ids
  (fn [{:keys [db]} _]
    {:http-xhrio {:method :get
                  :uri (str "/stories/top")
                  :format (ajax/json-request-format)
                  :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success [:process-response]
+                 :on-success [:request-story-ids-success]
                  :on-failure [:process-error]}
     :db (assoc db :loading? true)}))
 
 (reg-event-fx
- :request-hn-story
- (fn [{:keys [db]} [id]]
+ :request-story-ids-success
+ (fn [{:keys [db]} [_ ids]]
+   (assoc db :story-ids (js->clj ids))
+   (dispatch [:request-story (nth ids (or (:active-story-idx db) 0))])))
+
+(reg-event-fx
+ :request-story
+ (fn [{:keys [db]} [_ id]]
    {:http-xhrio {:method :get
                  :uri (str "/stories/top/" id)
                  :format (ajax/json-request-format)
                  :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success [:process-response]
+                 :on-success [:request-story-success]
                  :on-failure [:process-error]}
     :db (assoc db :loading? true)}))
 
 (reg-event-db
- :process-response
- (fn [db [_ {:keys [db-key data]}]]
+ :request-story-success
+ (fn [db [_ story]]
    (-> db
        (assoc :loading? false)
-       (assoc db-key (js->clj data)))))
+       (assoc :story (js->clj story)))))
 
 (reg-event-db
  :process-error
@@ -62,6 +70,11 @@
   (fn [db [_ docs]]
     (assoc db :docs docs)))
 
+(reg-event-db
+ :set-active-story-idx
+ (fn [db [_ idx]]
+   (assoc db :active-story-idx idx)))
+
 ;;subscriptions
 
 (reg-sub
@@ -70,9 +83,19 @@
    (:loading? db)))
 
 (reg-sub
- :hn-story-ids
+ :story-ids
  (fn [db _]
-   (:hn-story-ids db)))
+   (:story-ids db)))
+
+(reg-sub
+ :active-story-idx
+ (fn [db _]
+   (:active-story-idx db)))
+
+(reg-sub
+ :story
+ (fn [db _]
+   (:story db)))
 
 (reg-sub
   :page

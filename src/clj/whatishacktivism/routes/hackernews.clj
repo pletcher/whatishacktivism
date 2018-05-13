@@ -7,9 +7,7 @@
 (defroutes hackernews-routes
   (GET "/stories/top" []
        (let [ids (hn/top-stories)]
-         {:body {:db-key :hn-story-ids
-                 :data ids}}))
+         {:body ids}))
   (GET "/stories/top/:id" [id]
        (let [story (hn/story id)]
-         {:body {:db-key :hn-story
-                 :data story}})))
+         {:body story})))

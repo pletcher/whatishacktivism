@@ -40,7 +40,8 @@
 
 (defn start-button []
   [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange
-   {:href "#" :onClick #(rf/dispatch [:request-hn-story-ids])} "Do I have a choice?"])
+   {:href "#/stories/1"}
+   "Do I have a choice?"])
 
 (defn home-page []
   [:article.vh-100.dt.w-100
@@ -48,9 +49,20 @@
     [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]
     (start-button)]])
 
+(defn loading []
+  [:article.vh-100.dt.w-100
+   [:div.dtc.v-mid.tc.orange.ph3.ph4-l
+    [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Loading..."]]])
+
+(defn story-page []
+  (let [loading? @(rf/subscribe [:loading?])
+        story @(rf/subscribe [:story])]
+    (if loading? (loading) [:h1 (str (:title story) " by " (:by story) " from " (:url story))])))
+
 (def pages
   {:about #'about-page
-   :home #'home-page})
+   :home #'home-page
+   :story #'story-page})
 
 (defn page []
   [:main.avenir-next.near-black
@@ -66,15 +78,18 @@
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
 
+(secretary/defroute "/stories/:idx" [idx]
+  (rf/dispatch [:show-stories idx]))
+
 ;; -------------------------
 ;; History
 ;; must be called after routes have been defined
 (defn hook-browser-navigation! []
   (doto (History.)
     (events/listen
-      HistoryEventType/NAVIGATE
-      (fn [event]
-        (secretary/dispatch! (.-token event))))
+     HistoryEventType/NAVIGATE
+     (fn [event]
+       (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
 ;; -------------------------
