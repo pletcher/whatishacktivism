@@ -1,6 +1,6 @@
 (ns whatishacktivism.routes.hackernews
   (:require [clojure.java.io :as io]
-            [compojure.core :refer [defroutes GET]]
+            [compojure.core :refer [defroutes GET POST]]
             [ring.util.http-response :as response]
             [whatishacktivism.hackernews :as hn]))
 
@@ -8,6 +8,8 @@
   (GET "/stories/top" []
        (let [ids (hn/top-stories)]
          {:body ids}))
-  (GET "/stories/top/:id" [id]
+  (GET "/stories/:id" [id]
        (let [story (hn/story id)]
-         {:body story})))
+         {:body story}))
+  (POST "/stories/:id/votes" [id]
+        {:body {:ok "ok"}}))
