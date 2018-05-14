@@ -32,13 +32,15 @@
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:request-story-ids-success]
                  :on-failure [:process-error]}
-    :db (assoc db :loading? true)}))
+    :db (assoc-in db [:loading? :story-ids] true)}))
 
 (reg-event-fx
  :request-story-ids-success
  (fn [{:keys [db]} [_ ids]]
-   (assoc db :story-ids (js->clj ids))
-   (dispatch [:request-story (nth ids (or (:active-story-idx db) 0))])))
+   {:db (-> db
+            (assoc-in [:loading? :story-ids] false)
+            (assoc :story-ids (js->clj ids)))
+    :dispatch [:request-story (nth ids (or (:active-story-idx db) 0))]}))
 
 (reg-event-fx
  :request-story
@@ -49,14 +51,35 @@
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success [:request-story-success]
                  :on-failure [:process-error]}
-    :db (assoc db :loading? true)}))
+    :db (assoc-in db [:loading? :story] true)}))
+
+(reg-event-fx
+ :request-story-success
+ (fn [{:keys [db]} [_ raw]]
+   (let [story (js->clj raw)
+         comment-requests (mapv (fn [id] [:request-comment id]) (:kids story))]
+     {:db (-> db
+              (assoc-in [:loading? :story] false)
+              (assoc :story story))
+      :dispatch-n comment-requests})))
+
+(reg-event-fx
+ :request-comment
+ (fn [{:keys [db]} [_ id]]
+   {:http-xhrio {:method :get
+                 :uri (str "/stories/top/" id)
+                 :format (ajax/json-request-format)
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success [:request-comment-success]
+                 :on-failure [:process-error]}
+    :db (assoc-in db [:loading? :comments id] true)}))
 
 (reg-event-db
- :request-story-success
- (fn [db [_ story]]
+ :request-comment-success
+ (fn [db [_ comment]]
    (-> db
-       (assoc :loading? false)
-       (assoc :story (js->clj story)))))
+       (assoc-in [:loading? :comments (:id comment)] false)
+       (assoc-in [:comments (:id comment)] comment))))
 
 (reg-event-db
  :process-error
@@ -66,11 +89,6 @@
        (assoc :error (js->clj error)))))
 
 (reg-event-db
-  :set-docs
-  (fn [db [_ docs]]
-    (assoc db :docs docs)))
-
-(reg-event-db
  :set-active-story-idx
  (fn [db [_ idx]]
    (assoc db :active-story-idx idx)))
@@ -78,9 +96,24 @@
 ;;subscriptions
 
 (reg-sub
- :loading?
+ :story/loading?
  (fn [db _]
-   (:loading? db)))
+   (get-in db [:loading? :story])))
+
+(reg-sub
+ :story-ids/loading?
+ (fn [db _]
+   (get-in db [:loading? :story-ids])))
+
+(reg-sub
+ :comment/loading?
+ (fn [db [_ id]]
+   (get-in db [:loading? :comments id])))
+
+(reg-sub
+ :comment
+ (fn [db [_ id]]
+   (get-in db [:comments id])))
 
 (reg-sub
  :story-ids
@@ -101,8 +134,3 @@
   :page
   (fn [db _]
     (:page db)))
-
-(reg-sub
-  :docs
-  (fn [db _]
-    (:docs db)))

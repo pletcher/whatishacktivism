@@ -38,26 +38,45 @@
                   "What is Digital Humanities?"]
                  ", an app that presents random quotes about digital humanities based on a curated list."]))
 
-(defn start-button []
-  [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange
-   {:href "#/stories/1"}
-   "Do I have a choice?"])
+(defn button [href text]
+  [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange {:href href} text])
 
 (defn home-page []
   [:article.vh-100.dt.w-100
    [:div.dtc.v-mid.tc.orange.ph3.ph4-l
     [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]
-    (start-button)]])
+    (button "#/stories/1" "Do I have a choice?")]])
 
 (defn loading []
   [:article.vh-100.dt.w-100
    [:div.dtc.v-mid.tc.orange.ph3.ph4-l
     [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Loading..."]]])
 
+(defn comment-component [id]
+  (let [loading? @(rf/subscribe [:comment/loading? id])
+        comment @(rf/subscribe [:comment id])]
+    (if loading? (loading)
+        (let [{:keys [by text]} comment]
+          [:li.ph4.pv3
+           [:span.fw6 (str by ":")]
+           [:span.f5.db.lh-copy text]]))))
+
 (defn story-page []
-  (let [loading? @(rf/subscribe [:loading?])
+  (let [loading? @(rf/subscribe [:story/loading?])
         story @(rf/subscribe [:story])]
-    (if loading? (loading) [:h1 (str (:title story) " by " (:by story) " from " (:url story))])))
+    (if loading? (loading)
+        (let [{:keys [by kids title url]} story]
+          [:article.vh-100.dt.w-100
+           [:section.ph3.ph4-l
+            [:h1.f-subheadline-l.fw6.mb0.orange.tc title]
+            [:h2.tc [:span "submitted by "] [:span.orange by]]
+            [:h3.tc [:span "source: "] [:a.link.orange {:href url} url]]]
+           [:div.tc.ph3.ph4-l
+            [:h3.orange "Would you say that the discussion below leans to the left or the right?"]
+            [:span.ma4 (button "#l" "←")]
+            [:span.ma4 (button "#r" "→")]]
+           [:div.ml4.ph3.ph4-1
+            [:ul.list.pl0 (map #(comment-component %) kids)]]]))))
 
 (def pages
   {:about #'about-page
@@ -94,9 +113,6 @@
 
 ;; -------------------------
 ;; Initialize app
-(defn fetch-docs! []
-  (GET "/docs" {:handler #(rf/dispatch [:set-docs %])}))
-
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (r/render [#'page] (.getElementById js/document "app")))
@@ -104,6 +120,5 @@
 (defn init! []
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
-  (fetch-docs!)
   (hook-browser-navigation!)
   (mount-components))
