@@ -11,5 +11,6 @@
   (GET "/stories/:id" [id]
        (let [story (hn/story id)]
          {:body story}))
-  (POST "/stories/:id/votes" [id]
+  (POST "/stories/:id/descriptions" [id params]
+        (println params)
         {:body {:ok "ok"}}))

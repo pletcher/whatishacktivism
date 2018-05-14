@@ -40,7 +40,7 @@
                  ", an app that presents random quotes about digital humanities based on a curated list."]))
 
 (defn button [href text]
-  [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.orange.w-100 {:href href} text])
+  [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.bg-orange.white.w-100 {:href href} text])
 
 (defn hn-story [id]
   [:a.link.orange {:href (str "https://news.ycombinator.com/item?id=" id)} "full comments"])
@@ -64,6 +64,22 @@
            [:span.fw6 (str by ":")]
            [:span.f5.db.lh-copy text]]))))
 
+(defn description-form []
+  (let [description @(rf/subscribe [:description])]
+    [:form.mw7
+     [:label.clip {:for "description"} "In a word, how would you describe political tone of the discussion below?"]
+     [:input#description.bb.bl.bt.b--black-20.black-80.br1-ns.br--left-ns.f6.f5-l.fl.input-reset.lh-solid.pa3.w-100.w-75-m.w-80-l
+      {:placeholder "Conservative? Radical? Civil?"
+       :type "text"
+       :name "description"
+       :on-change #(rf/dispatch [:set-description (-> % .-target .-value)])
+       :value description}]
+     [:input.b.bg-orange.bn.br1-ns.br--right-ns.button-reset.f6.f5-l.fl.pointer.pv3.tc.w-100.w-25-m.w-20-l.white
+      {:on-click #(do (.preventDefault %)
+                      (rf/dispatch [:submit-description]))
+       :type "button"
+       :value "Submit"}]]))
+
 (defn story-page []
   (let [loading? @(rf/subscribe [:story/loading?])
         story @(rf/subscribe [:story])]
@@ -72,19 +88,16 @@
        [:div.dtc.v-mid.tc.orange.ph3.ph4-l
         [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Loading..."]]]
       (let [{:keys [by id kids title url]} story]
-        [:article.vh-100.dt.w-100
+        [:article
          [:section.ph3.ph4-l
           [:h1.f-subheadline-l.fw6.mb0.orange.tc title]
           [:h2.tc [:span "submitted by "] (user by)]
           [:h3.tc [:span "source: "] [:a.link.orange {:href url} url]]
           [:h4.tc.mb0 (hn-story id)]]
-         [:div.tc.pa4
-          [:h2.orange.mb4 "How would you classify the political tone of the discussion below?"]
-          [:div.flex.justify-around.ph4
-           [:span.w-20 {:on-click #(rf/dispatch [:request-vote-left id])} (button "#/stories" "left-leaning")]
-           [:span.w-20 {:on-click #(rf/dispatch [:request-vote-right id])} (button "#/stories" "right-leaning")]]]
-         [:div.ph5
-          [:ul.list.pl0 (doall (map #(comment-component %) kids))]]]))))
+         [:div.cf.pa4.ph5.w-100
+          [:h2.orange "In a word, how would you describe the discussion below?"]
+          (description-form)]
+         [:ul.list (doall (map #(comment-component %) kids))]]))))
 
 (def pages
   {:about #'about-page

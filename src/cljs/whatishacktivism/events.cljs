@@ -4,6 +4,10 @@
             [day8.re-frame.http-fx]
             [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub subscribe]]))
 
+(def hn-api "https://hacker-news.firebaseio.com/v0")
+(defn hn-item [id] (str hn-api "/item/" id ".json"))
+(defn hn-user [id] (str hn-api "/user/" id ".json"))
+
 ;;dispatchers
 
 (reg-event-db
@@ -16,6 +20,11 @@
   (fn [db [_ page]]
     (assoc db :page page)))
 
+(reg-event-db
+  :set-description
+  (fn [db [_ s]]
+    (assoc db :description s)))
+
 (reg-event-fx
   :show-stories
   (fn [{:keys [db]} _]
@@ -27,7 +36,6 @@
   (fn [{:keys [db]} _]
     {:http-xhrio {:method :get
                   :uri (str "/stories/top")
-                  :format (ajax/json-request-format)
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success [:request-story-ids-success]
                   :on-failure [:process-error]}
@@ -46,10 +54,8 @@
   (fn [{:keys [db]} _]
     (let [ids (:story-ids db)
           id (first ids)]
-      (println id)
       {:http-xhrio {:method :get
-                    :uri (str "/stories/" id)
-                    :format (ajax/json-request-format)
+                    :uri (hn-item id)
                     :response-format (ajax/json-response-format {:keywords? true})
                     :on-success [:request-story-success (rest ids)]
                     :on-failure [:process-error]}
@@ -66,41 +72,35 @@
        :dispatch-n comment-requests})))
 
 (reg-event-fx
-  :request-vote-left
-  (fn [{:keys [db]} [_ id]]
-    {:http-xhrio {:method :post
-                  :uri (str "/stories/" id "/votes")
-                  :params {:direction "left"}
-                  :format (ajax/json-request-format)
-                  :response-format (ajax/json-response-format {:keywords? true})
-                  :on-success [:request-vote-success id]
-                  :on-failure [:process-error]}
-     :db (assoc-in db [:loading? :votes id] true)}))
+  :submit-description
+  (fn [{:keys [db]} _]
+    (let [story (:story db)
+          id (:id story)
+          url (:url story)
+          description (:description db)]
+     {:http-xhrio {:method :post
+                   :uri (str "/stories/" id "/descriptions")
+                   :params {:body description :url url}
+                   :format (ajax/json-request-format)
+                   :response-format (ajax/json-response-format {:keywords true})
+                   :on-success [:submit-description-success]
+                   :on-failure [:process-error]}
+      :db (-> db
+              (assoc-in [:loading? :descriptions id] true))})))
 
 (reg-event-fx
-  :request-vote-right
-  (fn [{:keys [db]} [_ id]]
-    {:http-xhrio {:method :post
-                  :uri (str "/stories/" id "/votes")
-                  :params {:direction "right"}
-                  :format (ajax/json-request-format)
-                  :response-format (ajax/json-response-format {:keywords? true})
-                  :on-success [:request-vote-success id]
-                  :on-failure [:process-error]}
-     :db (assoc-in db [:loading? :votes id] true)}))
-
-(reg-event-fx
-  :request-vote-success
-  (fn [{:keys [db]} [_ id response]]
-    {:db (assoc-in db [:loading? :votes id] false)
-     :dispatch [:request-story]}))
+  :submit-description-success
+  (fn [{:keys [db]} [_ {:keys [data]}]]
+    {:db (-> db
+             (assoc-in [:loading? :descriptions (:id data)] false))
+     :dispatch-n (list [:set-description ""]
+                       [:request-story])}))
 
 (reg-event-fx
   :request-comment
   (fn [{:keys [db]} [_ id]]
     {:http-xhrio {:method :get
-                  :uri (str "/stories/" id)
-                  :format (ajax/json-request-format)
+                  :uri (hn-item id)
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success [:request-comment-success]
                   :on-failure [:process-error]}
@@ -151,6 +151,11 @@
   :story
   (fn [db _]
     (:story db)))
+
+(reg-sub
+  :description
+  (fn [db _]
+    (:description db)))
 
 (reg-sub
   :page
