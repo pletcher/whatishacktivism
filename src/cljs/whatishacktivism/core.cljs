@@ -4,14 +4,19 @@
             [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
-            [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
+            [cljsjs.showdown]
             [whatishacktivism.ajax :refer [load-interceptors!]]
             [whatishacktivism.events])
   (:import goog.History))
 
 (defn gen-key []
   (gensym "key-"))
+
+(let [conv-class (.-Converter js/showdown)
+      converter (conv-class.)]
+  (defn md->html [s]
+    (.makeHtml converter s)))
 
 (defn nav-link [uri title page]
   [:a.link.dim.f6.f5-ns.dib.mr3
@@ -60,9 +65,10 @@
         k (gen-key)]
     (if loading? [:li.ph4.pv3 {:key k} "loading"]
         (if-let [{:keys [by text]} comment]
-          [:li.ph4.pv3 {:key k}
-           [:span.fw6 (str by ":")]
-           [:span.f5.db.lh-copy text]]))))
+          (if (nil? text) nil
+              [:li.ph4.pv3 {:key k}
+               [:span.fw6 (str by ":")]
+               [:span.f5.db.lh-copy {:dangerouslySetInnerHTML {:__html (md->html text)}}]])))))
 
 (defn description-form []
   (let [description @(rf/subscribe [:description])]
@@ -71,6 +77,7 @@
      [:input#description.bb.bl.bt.b--black-20.black-80.br1-ns.br--left-ns.f6.f5-l.fl.input-reset.lh-solid.pa3.w-100.w-75-m.w-80-l
       {:placeholder "Conservative? Radical? Civil?"
        :type "text"
+       :max-length 90
        :name "description"
        :on-change #(rf/dispatch [:set-description (-> % .-target .-value)])
        :value description}]
