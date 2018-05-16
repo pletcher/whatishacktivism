@@ -21,9 +21,19 @@
     (assoc db :page page)))
 
 (reg-event-db
-  :set-description
+  :set-description-input
   (fn [db [_ s]]
-    (assoc db :description s)))
+    (assoc db :description-input s)))
+
+(reg-event-db
+  :hide-descriptions
+  (fn [db _]
+    (assoc db :descriptions-shown? false)))
+
+(reg-event-db
+  :show-descriptions
+  (fn [db _]
+    (assoc db :descriptions-shown? true)))
 
 (reg-event-fx
   :show-stories
@@ -69,7 +79,7 @@
                (assoc-in [:loading? :story] false)
                (assoc :story-ids ids)
                (assoc :story story))
-       :dispatch-n comment-requests})))
+       :dispatch-n (conj comment-requests [:hide-descriptions])})))
 
 (reg-event-fx
   :submit-description
@@ -93,7 +103,7 @@
   (fn [{:keys [db]} [_ {:keys [data]}]]
     {:db (-> db
              (assoc-in [:loading? :descriptions (:id data)] false))
-     :dispatch-n (list [:set-description ""]
+     :dispatch-n (list [:set-description-input ""]
                        [:request-story])}))
 
 (reg-event-fx
@@ -153,9 +163,14 @@
     (:story db)))
 
 (reg-sub
-  :description
+  :description-input
   (fn [db _]
-    (:description db)))
+    (:description-input db)))
+
+(reg-sub
+  :descriptions-shown?
+  (fn [db _]
+    (:descriptions-shown? db)))
 
 (reg-sub
   :page

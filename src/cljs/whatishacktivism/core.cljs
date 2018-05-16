@@ -71,21 +71,31 @@
                [:span.f5.db.lh-copy {:dangerouslySetInnerHTML {:__html (md->html text)}}]])))))
 
 (defn description-form []
-  (let [description @(rf/subscribe [:description])]
-    [:form.mw7
+  (let [s @(rf/subscribe [:description-input])
+        on-click #(do (.preventDefault %)
+                      (rf/dispatch [:submit-description]))]
+    [:div.mw7
      [:label.clip {:for "description"} "In a word, how would you describe political tone of the discussion below?"]
      [:input#description.bb.bl.bt.b--black-20.black-80.br1-ns.br--left-ns.f6.f5-l.fl.input-reset.lh-solid.pa3.w-100.w-75-m.w-80-l
       {:placeholder "Conservative? Radical? Civil?"
        :type "text"
        :max-length 90
        :name "description"
-       :on-change #(rf/dispatch [:set-description (-> % .-target .-value)])
-       :value description}]
-     [:input.b.bg-orange.bn.br1-ns.br--right-ns.button-reset.f6.f5-l.fl.pointer.pv3.tc.w-100.w-25-m.w-20-l.white
-      {:on-click #(do (.preventDefault %)
-                      (rf/dispatch [:submit-description]))
-       :type "button"
-       :value "Submit"}]]))
+       :on-change #(rf/dispatch [:set-description-input (-> % .-target .-value)])
+       :on-key-down #(when (= (.-which %) 13)
+                       (on-click %))
+       :value s}]
+     [:a.bg-orange.bn.br1-ns.br--right-ns.btn.f5.fl.fw6.pointer.pv3.tc.w-100.w-25-m.w-20-l.white
+      {:on-click on-click} "Submit"]]))
+
+(defn show-descriptions-link []
+  (if @(rf/subscribe [:descriptions-shown?])
+    [:p.black-80
+     "It looks like there aren't enough descriptions to show anything useful yet. "
+     [:a.orange.pointer {:on-click #(rf/dispatch [:hide-descriptions])} "(hide)"]]
+    [:a.f3.fw6.orange.pointer
+     {:on-click #(rf/dispatch [:show-descriptions])}
+     "Show descriptions"]))
 
 (defn story-page []
   (let [loading? @(rf/subscribe [:story/loading?])
@@ -101,9 +111,10 @@
           [:h2.tc [:span "submitted by "] (user by)]
           [:h3.tc [:span "source: "] [:a.link.orange {:href url} url]]
           [:h4.tc.mb0 (hn-story id)]]
-         [:div.cf.pa4.ph5.w-100
+         [:div.pa4.ph5.w-100
           [:h2.orange "In a word, how would you describe the discussion below?"]
-          (description-form)]
+          [:div.cf (description-form)]
+          [:div.cf.pt4 (show-descriptions-link)]]
          [:ul.list (doall (map #(comment-component %) kids))]]))))
 
 (def pages

@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [compojure.coercions :refer [as-int]]
             [compojure.core :refer [defroutes GET POST]]
+            [hiccup.util :refer [escape-html]]
             [ring.util.http-response :as response]
             [whatishacktivism.db.core :as db]
             [whatishacktivism.hackernews :as hn]))
@@ -22,6 +23,6 @@
   ;; stories vector
   (POST "/stories/:id/descriptions" {{:keys [id url body]} :params}
         (let [story (find-or-create!-story (Integer/parseInt id) url)
-              desc (db/create-description! {:body body
+              desc (db/create-description! {:body (escape-html body)
                                             :hn_story_id (:id story)})]
           {:body {:data desc}})))

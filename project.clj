@@ -9,6 +9,8 @@
                  [clj-http "3.9.0"]
                  [clj-time "0.14.2"]
                  [cljs-ajax "0.7.3"]
+                 [cljsjs/d3 "3.5.5-0"] ;; d3-cloud depends on an older version
+                 [cljsjs/d3-cloud "1.2.1-0"]
                  [cljsjs/showdown "1.4.2-0"]
                  [compojure "1.6.0"]
                  [conman "0.7.6"]
