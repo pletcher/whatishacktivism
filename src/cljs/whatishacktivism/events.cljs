@@ -87,7 +87,7 @@
     (let [story (:story db)
           id (:id story)
           url (:url story)
-          description (:description db)]
+          description (:description-input db)]
      {:http-xhrio {:method :post
                    :uri (str "/stories/" id "/descriptions")
                    :params {:body description :url url}
