@@ -5,9 +5,9 @@ INSERT INTO hn_stories
 VALUES (:hn_id, :url)
 RETURNING *
 
--- :name find-hn-story-by-id :? :1
--- :doc finds a Hacker News story record with the given id
-SELECT * from hn_stories WHERE id = :id LIMIT 1
+-- :name find-hn-story :? :1
+-- :doc finds a Hacker News story record with the given *Hacker News* id
+SELECT * from hn_stories WHERE hn_id = :hn_id LIMIT 1
 
 -- :name create-description! :<! :1
 -- :doc creates a new description record of a Hacker News story

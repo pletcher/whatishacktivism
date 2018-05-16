@@ -6,3 +6,5 @@ updated_at   timestamp not null default now(),
 hn_id        integer not null,
 url          varchar(255)
 );
+
+CREATE INDEX ON hn_stories (hn_id);
