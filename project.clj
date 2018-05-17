@@ -1,7 +1,7 @@
 (defproject whatishacktivism "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "A subjective exploration of Hacker News comments"
+  :url "https://whatishacktivism.herokuapp.com"
 
   :dependencies [[buddy "2.0.0"]
                  [ch.qos.logback/logback-classic "1.2.3"]
