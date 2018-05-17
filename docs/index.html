@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Is Hacktivism? | What is Hacktivism?</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">
+
+<section class="section">
+  <div class="container">
+    <h2 class="subtitle is-6">May 16, 2018</h2>
+    <h1 class="title">What Is Hacktivism?</h1>
+    <div class="content">
+
+
+<p><em>Uprising <sup>11</sup>&frasl;<sub>13</sub></em> opened with the question, &ldquo;In what way is hacking a modality of revolt?&rdquo; Shortly into the discussion, Gabriella Coleman posed the additional question, &ldquo;Does the craft of hacking have bearing on hacker politics?&rdquo;</p>
+
+<p>With these two questions serving again as a place to start, I wanted to try to understand how (self-styled, or even so-called) hackers talk among themselves. The idea of a hacker has been coopted&mdash;and popularized&mdash;by Silicon Valley&rsquo;s<sup class="footnote-ref" id="fnref:silicon-valley"><a href="#fn:silicon-valley">1</a></sup> startup and investment culture, and part of what I wanted to understand was the ways that this redefinition shapes our view not only of hackers but also of hacker politics. The result was a web app called <a href="https://whatishacktivism.herokuapp.com">What Is Hacktivism?</a>. In this post, I want to explain some of the decisions behind What Is Hacktivism?, some of what I hope the app might achieve, and some potential directions for further development.</p>
+
+<h2 id="who-s-hacking">Who&rsquo;s hacking?</h2>
+
+<p>What Is Hacktivism? sources its material from the discussion board <a href="https://news.ycombinator.com">Hacker News</a>, an online forum run by YCombinator, one of the most prestigious (and well-funded) startup incubators in the world. What Is Hacktivism has not hacked YCombinator&rsquo;s material; it gets its data from the offical <a href="https://github.com/HackerNews/API">Hacker News API</a>.</p>
+
+<p>The decision to focus on white-collar hackers<sup class="footnote-ref" id="fnref:white-collar"><a href="#fn:white-collar">2</a></sup> is not, I think, an uncontroversial one. As Coleman, Emmanuel Goldstein, and Simona Levi all noted, &ldquo;There&rsquo;s a reason why hacking emerges under certain kinds of government&rdquo; (quoting Goldstein). By looking at the comments and stories posted to Hacker News, What is Hacktivism? looks at hackers who occupy some of the most privileged positions in the corporate world&mdash;hackers who frequent Hacker News are not, generally speaking, marginalized (although there are, of course, exceptions).</p>
+
+<p>Emmanuel continued, &ldquo;All you need to start hacking is a sense of being treated unfairly. And there&rsquo;s the rub. Much of the sentiment driving Silicon Valley culture comes from a feeling of unfair treatment: see Mark Zuckerberg&rsquo;s widely-publicized <a href="https://www.theguardian.com/technology/2012/may/18/mark-zuckerberg-college-messages">IMs</a> from college, or observe the frequency with which mainstream media refer to tech titans like Sergey Brin (co-founder of Google), Linus Torvalds (inventor of Linux), etc. as &ldquo;geeks&rdquo; and &ldquo;nerds.&rdquo;</p>
+
+<p>Thus, while Coleman&rsquo;s point that &ldquo;hackers can no longer be viewed as exotic experts [because] they have become authoritative and public participants in our daily geopolitical goings-on&rdquo; is beyond dispute, we can still ask how hackers have found this sweet spot between privilege and autonomy.<sup class="footnote-ref" id="fnref:coleman-s92"><a href="#fn:coleman-s92">3</a></sup> Part of their method, I submit, lies in the way they talk.</p>
+
+<h2 id="build-process">Build Process</h2>
+
+<p>In daily parlance, hackers refer&mdash;sometimes disparagingly, sometimes self-deprecatingly, sometimes sarcastically&mdash;to software that has been hastily cobbled together as a hack. In that sense, What Is Hacktivism? might itself qualify as a hack. (I have tried to clean up the <a href="https://github.com/pletcher/whatishacktivism">code</a> to the point of intelligibility, at least.) In this section, I want to walk through some of the decisions behind the app in the spirit of a code walkthrough.</p>
+
+<p>First, the app has been written in <a href="https://clojure.org">Clojure</a>, a dialect of <a href="https://en.wikipedia.org/wiki/Lisp_(programming_language)">Lisp</a> that runs on the <a href="https://en.wikipedia.org/wiki/Java_virtual_machine">Java virtual machine</a>. A relatively new language, Clojure can nevertheless enjoy the benefits of Java&rsquo;s decades of use and borrow freely from Java&rsquo;s countless libraries.</p>
+
+<p>Clojure, like the <a href="https://www.debian.org/">Debian</a> operating system in Coleman&rsquo;s paper, is open source software: anyone can inspect and modify the code. (As with Debian and other open source software, changes are only pushed to the canonical version of Clojure after approval by the language&rsquo;s maintainers.)</p>
+
+<p>What Is Hacktivism? runs on a virtual server on the <a href="https://heroku.com">Heroku</a> platform. When the app receives a request, it sends a payload of <a href="https://www.w3.org/html/">HTML</a> (structure), <a href="https://www.w3.org/Style/CSS/">CSS</a> (style), and <a href="https://developer.mozilla.org/en-US/docs/Web/javascript">JavaScript</a> (function) to the client.<sup class="footnote-ref" id="fnref:web-tech"><a href="#fn:web-tech">4</a></sup> The client-side code is written in ClojureScript, a variant of Clojure that compiles to JavaScript instead of running on the Java virtual machine, allowing the program to run natively in a web browser.</p>
+
+<p>The brunt of the application runs in <a href="https://github.com/pletcher/whatishacktivism/blob/master/src/cljs/whatishacktivism/core.cljs#L120-163">these few lines</a>:</p>
+
+<pre><code class="language-clojure">(def pages
+  {:about #'about-page
+   :home #'home-page
+   :story #'story-page})
+
+(defn page []
+  [:main.avenir-next.near-black
+   [(pages @(rf/subscribe [:page]))]])
+
+;; -------------------------
+;; Routes
+(secretary/set-config! :prefix &quot;#&quot;)
+
+(secretary/defroute &quot;/&quot; []
+  (rf/dispatch [:set-active-page :home]))
+
+(secretary/defroute &quot;/about&quot; []
+  (rf/dispatch [:set-active-page :about]))
+
+(secretary/defroute &quot;/stories&quot; []
+  (rf/dispatch [:show-stories]))
+
+;; -------------------------
+;; History
+;; must be called after routes have been defined
+(defn hook-browser-navigation! []
+  (doto (History.)
+    (events/listen
+      HistoryEventType/NAVIGATE
+      (fn [event]
+        (secretary/dispatch! (.-token event))))
+    (.setEnabled true)))
+
+;; -------------------------
+;; Initialize app
+(defn mount-components []
+  (rf/clear-subscription-cache!)
+  (r/render [#'page] (.getElementById js/document &quot;app&quot;)))
+
+(defn init! []
+  (rf/dispatch-sync [:initialize-db])
+  (load-interceptors!)
+  (hook-browser-navigation!)
+  (mount-components))
+</code></pre>
+
+<p>These lines handle intercepting and interpreting a user&rsquo;s requests, rendering the app&rsquo;s components, and initializing the app&rsquo;s data store&mdash;its source of truth.</p>
+
+<p>The main user interaction happens <a href="https://github.com/pletcher/whatishacktivism/blob/master/src/cljs/whatishacktivism/events.cljs#L84-99">here</a>:</p>
+
+<pre><code class="language-clojure">(reg-event-fx
+  :submit-description
+  (fn [{:keys [db]} _]
+    (let [story (:story db)
+          id (:id story)
+          url (:url story)
+          description (:description-input db)]
+     {:http-xhrio {:method :post
+                   :uri (str &quot;/stories/&quot; id &quot;/descriptions&quot;)
+                   :params {:body description :url url}
+                   :format (ajax/json-request-format)
+                   :response-format (ajax/json-response-format {:keywords true})
+                   :on-success [:submit-description-success]
+                   :on-failure [:process-error]}
+      :db (-&gt; db
+              (assoc-in [:loading? :descriptions id] true))})))
+</code></pre>
+
+<p>The <code>:http-xhrio</code> map describes a request to the server for submitting the current user&rsquo;s description of comments on a Hacker News story. These lines also represent the app&rsquo;s main vulnerability&mdash;the point at which it could most easily be hacked. Cross-site scripting, or XSS, is a vulnerability that any interactive web app must deal with. Anytime a web app accepts arbitrary user input and stores it for later retrieval, it opens up all of its users to the possibility of executing an unauthorized script in their browser. Luckily, mitigation simply involves instructing the server <a href="https://gitlab.com/pletcher/whatishacktivism/blob/master/src/clj/whatishacktivism/routes/hackernews.clj#L24-28">sanitizes the input</a> before anything bad can happen.</p>
+
+<h2 id="momentary-conclusions">Momentary Conclusions</h2>
+
+<p>In her article, Coleman writes, &ldquo;Hackers &hellip; distinguish themselves by their avid embrace of political intersectionality: hackers exhibit a high degree of tolerance for working across ideological lines.&rdquo;<sup class="footnote-ref" id="fnref:coleman-s99"><a href="#fn:coleman-s99">5</a></sup>. &ldquo;To be sure,&rdquo; she cautions, &ldquo;notable exceptions abound: many of the leftist technology collectives discussed [in the article] restrict membership because of issues of trust. And political infighting has at times erupted over linguistic minutia&mdash;as in the Free and Open Software movement, where one contingent accuses another of having adopted the term &lsquo;open&rsquo; as an alternative to &lsquo;free&rsquo; in the late 1990s as a way to attract funding from investors made nervous by more explicit political language.&rdquo;<sup class="footnote-ref" id="fnref:coleman-s99"><a href="#fn:coleman-s99">5</a></sup> I do not yet know how anyone will use or view What is Hacktivism?. Optimistically, I hope that it might spur more of the conversations that occurred during <em>Uprising <sup>11</sup>&frasl;<sub>13</sub></em>, and that perhaps it will challenge some of the notions of hackerdom that predominated that discussion. Hacker politics, according to my hunch, have to do with both hackers&rsquo; work and how they talk about it.</p>
+
+<h2 id="bibliography">Bibliography</h2>
+
+<ul>
+<li>Coleman, Gabriella. &ldquo;From Internet Farming to Weapons of the Geek.&rdquo; <em>Current Anthropology</em> 58, supplement 15 (February 2017): S91-S102.</li>
+<li>Goldstein, Emmanuel. &ldquo;Hacktivism and the Hacker Promise.&rdquo; <em>Uprising <sup>11</sup>&frasl;<sub>13</sub></em> (22 March 2018). <a href="http://blogs.law.columbia.edu/uprising1313/emmanuel-goldstein-hacktivism-and-the-hacker-promise">http://blogs.law.columbia.edu/uprising1313/emmanuel-goldstein-hacktivism-and-the-hacker-promise</a></li>
+<li>Levi, Simona. &ldquo;Working Notes for a R-Evolution.&rdquo; <em>Uprising <sup>11</sup>&frasl;<sub>13</sub></em> (22 March 2018). <a href="http://blogs.law.columbia.edu/uprising1313/simona-levi-working-notes-for-a-r-evolution/">http://blogs.law.columbia.edu/uprising1313/simona-levi-working-notes-for-a-r-evolution/</a></li>
+</ul>
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:silicon-valley">I use &ldquo;Silicon Valley&rdquo; as shorthand for the type of culture that seems to permeate outward from the Bay Area (nowadays not even concentrated in the southern part of the Bay but in San Francisco).
+ <a class="footnote-return" href="#fnref:silicon-valley"><sup>[return]</sup></a></li>
+<li id="fn:white-collar">Not be to confused with <a href="https://en.wikipedia.org/wiki/White_hat_%28computer_security%29">white-hat hackers</a>.
+ <a class="footnote-return" href="#fnref:white-collar"><sup>[return]</sup></a></li>
+<li id="fn:coleman-s92">Gabriella Coleman, &ldquo;From Internet Farming to Weapons of the Geek,&rdquo; <em>Current Anthropology</em> 58, supplement 15 (February 2017): S92.
+ <a class="footnote-return" href="#fnref:coleman-s92"><sup>[return]</sup></a></li>
+<li id="fn:web-tech">Each of these technologies is overseen by a governing body that sets standards for implementation. Individual browsers&mdash;most notoriously, Internet Explorer&mdash;might deviate from these standards.
+ <a class="footnote-return" href="#fnref:web-tech"><sup>[return]</sup></a></li>
+<li id="fn:coleman-s99">Coleman, &ldquo;Internet Farming&rdquo;: S99.
+ <a class="footnote-return" href="#fnref:coleman-s99"><sup>[return]</sup></a></li>
+</ol>
+</div>
+
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container has-text-centered">
+    <p></p>
+  </div>
+</section>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/clojure.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
