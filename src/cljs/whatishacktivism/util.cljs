@@ -7,6 +7,7 @@
 (def double-cs ["bb" "dd" "ff" "gg" "mm" "nn" "pp" "rr" "tt"])
 (def li-endings ["c" "d" "e" "g" "h" "k" "m" "n" "r" "t"])
 
+(def vowels-re (re-pattern (string/join "|" vowels)))
 (def word #"[^a-zA-Z0-9_\+\-/]")
 (def sentence #"[.!?,;:\t\\\"\(\)\']|\s[\-|—]\s")
 
@@ -19,8 +20,8 @@
     (str (subs s 0 i) replacement)
     s))
 
-;; FIXME: these methods can't use string/replace
-;; for obvious reasons
+(defn contains-vowel? [s]
+  (not (nil? (re-find vowels-re s))))
 
 (defn _step0 [s]
   (-> s
@@ -36,9 +37,7 @@
         (string/ends-with? s "ies")  (replace-suffix s "ies" (f "ies"))
         (string/ends-with? s "ss")   s
         (string/ends-with? s "us")   s
-        (string/ends-with? s "s")    (if-not (nil?
-                                               (re-find (re-pattern (string/join "|" vowels))
-                                                        (subs s 0 (- (count s) 2))))
+        (string/ends-with? s "s")    (if (contains-vowel? (subs s 0 (- (count s) 2)))
                                        (replace-suffix s "s" "")
                                        s)
         :else s)))
