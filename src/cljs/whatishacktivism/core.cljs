@@ -30,20 +30,6 @@
    [nav-link "#/" "Home" :home]
    [nav-link "#/about" "About" :about]])
 
-(defn card [title body]
-  [:article.mw5.mw6-ns.hidden.ba.b--near-white.mv4
-   [:h1.f4.mv0.pv2.ph3.bg-near-white.near-black title]
-   [:div.pa3
-    [:p.f6.f5-ns.lh-copy.measure.mv0 body]]])
-
-(defn about-page []
-  (card "About" [:span
-                 [:span.i "What is hacktivism?"]
-                 " takes as its cue the better known "
-                 [:a.i {:href "https://whatisdigitalhumanities.com/"}
-                  "What is Digital Humanities?"]
-                 ", an app that presents random quotes about digital humanities based on a curated list."]))
-
 (defn button [href text]
   [:a.f3.fw6.link.dim.ba.bw2.ph3.pv2.mb2.dib.bg-orange.white.w-100 {:href href} text])
 
@@ -57,7 +43,7 @@
   [:article.vh-100.dt.w-100
    [:div.dtc.v-mid.tc.orange.ph3.ph4-l
     [:h1.f6.f2-m.f-subheadline-l.fw6.tc "Wanna run a quick experiment?"]
-    [:span.dib.w-25 (button "#/stories" "Do I have a choice?")]]])
+    [:span.dib.w-25 (button "#/stories" "Sure!")]]])
 
 (defn comment-component [id]
   (let [loading? @(rf/subscribe [:comment/loading? id])
@@ -118,8 +104,7 @@
          [:ul.list (doall (map #(comment-component %) kids))]]))))
 
 (def pages
-  {:about #'about-page
-   :home #'home-page
+  {:home #'home-page
    :story #'story-page})
 
 (defn page []
@@ -132,9 +117,6 @@
 
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
-
-(secretary/defroute "/about" []
-  (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/stories" []
   (rf/dispatch [:show-stories]))

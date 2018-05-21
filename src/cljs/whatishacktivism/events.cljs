@@ -1,5 +1,6 @@
 (ns whatishacktivism.events
   (:require [whatishacktivism.db :as db]
+            [whatishacktivism.util]
             [ajax.core :as ajax]
             [day8.re-frame.http-fx]
             [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub subscribe]]))
